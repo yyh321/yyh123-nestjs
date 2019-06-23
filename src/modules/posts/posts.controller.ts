@@ -1,10 +1,13 @@
-import { Controller, Get, Req, Query,Headers, Param, Post, Body, HttpException, HttpStatus, ForbiddenException, UseFilters } from '@nestjs/common';
+import { Controller, Get, Req, Query,Headers, Param, Post, Body, HttpException, HttpStatus, ForbiddenException, UseFilters, UsePipes, ValidationPipe, ParseIntPipe, UseGuards, SetMetadata } from '@nestjs/common';
 import { CreatePostDto } from './post.dto';
 import { DemoService } from './providers/demo/demo.service';
 import { DemoFilter } from '../../core/filters/demo.filter';
+import { DemoAuthGuard } from '../../core/guards/demo-auth.guard';
+import { Roles } from '../../core/decorators/roles.decorator';
 
 @Controller('posts')
 // @UseFilters(DemoFilter)
+// @UseGuards(DemoAuthGuard)
 export class PostsController {
   constructor( private demoService: DemoService) {
     
@@ -16,17 +19,21 @@ export class PostsController {
   }
 
   @Get(':id')
-  show(@Param() params) {
+  show(@Param('id',ParseIntPipe) id) {
+    console.log('id: ', typeof id);
     return {
-      title: `Posts ${params.id}`
+      title: `Posts ${id}`
     }
   }
 
   @Post()
   // @UseFilters(DemoFilter)
+  @UsePipes(ValidationPipe)
+  // @SetMetadata('roles',['member'])
+  @Roles('member')
   store(@Body() post:CreatePostDto) {
-    // this.demoService.create(post);
+    this.demoService.create(post);
     // throw new HttpException('没有权限',HttpStatus.FORBIDDEN);
-    throw new ForbiddenException('没有权限 !');
+    // throw new ForbiddenException('没有权限 !');
   }
 }
